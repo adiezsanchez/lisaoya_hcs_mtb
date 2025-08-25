@@ -1,5 +1,4 @@
 from pathlib import Path
-import czifile
 import nd2
 import tifffile
 import napari
