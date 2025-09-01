@@ -66,8 +66,8 @@ def read_image (image, slicing_factor_xy, log=True):
 
     if log:
         # Feedback for researcher
-        print(f"Compressed Array shape: {img.shape}")
         print(f"\n\nImage analyzed: {filename}")
         print(f"Original Array shape: {img.shape}")
+        print(f"Compressed Array shape: {img.shape}")
 
     return img, filename
