@@ -40,7 +40,7 @@ def list_images (directory_path, format=None):
 
     return images
 
-def read_image (image, slicing_factor_xy):
+def read_image (image, slicing_factor_xy, log=True):
     """Read raw image microscope files (.nd2), apply downsampling if needed and return filename and a numpy array"""
 
     # Read path storing raw image and extract filename
@@ -57,9 +57,6 @@ def read_image (image, slicing_factor_xy):
     else:
         print ("Implement new file reader")
 
-    print(f"\n\nImage analyzed: {filename}")
-    print(f"Original Array shape: {img.shape}")
-
     # Apply slicing trick to reduce image size (xy resolution)
     try:
         img = img[:, ::slicing_factor_xy, ::slicing_factor_xy]
@@ -67,7 +64,10 @@ def read_image (image, slicing_factor_xy):
         print(f"Slicing Error: {e}")
         print(f"Slicing parameters: Slicing_XY:{slicing_factor_xy}")
 
-    # Feedback for researcher
-    print(f"Compressed Array shape: {img.shape}")
+    if log:
+        # Feedback for researcher
+        print(f"Compressed Array shape: {img.shape}")
+        print(f"\n\nImage analyzed: {filename}")
+        print(f"Original Array shape: {img.shape}")
 
     return img, filename
