@@ -21,3 +21,7 @@ venv.bak/
 
 # Data and assets
 raw_data
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
