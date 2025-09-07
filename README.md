@@ -7,3 +7,19 @@ Environment creation command
 <code>pip install spotiflow</code>
 
 Still testing venv WIP
+
+<h1>New pixi section (WIP)</h1>
+
+<img src="./assets/pixi_banner.svg">
+
+This assumes you have Git installed, if not follow the instructions in this video:
+
+1. Open you cmd, copy the following command and hit enter. This will install Pixi.
+
+<code>powershell -ExecutionPolicy ByPass -c "irm -useb https://pixi.sh/install.ps1 | iex"</code>
+
+2. Close your cmd, reopen it, copy the following command.
+
+git clone https://github.com/adiezsanchez/lisaoya_hcs_mtb && cd lisaoya_hcs_mtb && pixi install
+
+3. Now you have a working environment to run the scripts contained in this repository.
