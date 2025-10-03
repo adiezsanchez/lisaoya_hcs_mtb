@@ -1,13 +1,13 @@
 from pathlib import Path
 import nd2
-import tifffile
-import napari
+from tifffile import imread, imwrite
+from tqdm import tqdm
 import numpy as np
-import os
 import pandas as pd
-from skimage import measure
 from scipy.ndimage import map_coordinates
+from skimage.measure import regionprops_table
 import pyclesperanto_prototype as cle
+import apoc
 
 cle.select_device("RTX")
 
@@ -57,9 +57,9 @@ def read_image (image, slicing_factor_xy, log=True):
 
     if log:
         # Feedback for researcher
-        print(f"\n\nImage analyzed: {filename}")
-        print(f"Original Array shape: {img.shape}")
-        print(f"Compressed Array shape: {img.shape}")
+        print(f"\nImage analyzed: {filename}")
+        #print(f"Original Array shape: {img.shape}")
+        #print(f"Compressed Array shape: {img.shape}")
 
     return img, filename
 
@@ -170,4 +170,163 @@ def count_points_in_labels(points, cytoplasm_labels):
 
     return counts_df[counts_df["label"] != 0].reset_index(drop=True)
 
+def brightfield_correction(directory_path, images, slicing_factor_xy):
+    """Substract uneven and remove background from BF by obtaining the median of all BF channels"""
 
+    try:
+
+        bf_correction = imread(directory_path / "bf_correction.tiff")
+
+    except FileNotFoundError:
+
+        # Create an empty list to store the brightfield images from each well
+        bf_arrays = []
+
+        # Read all images, extract the brightfield channel and calculate the mean to correct illumination and remove dust spots
+        for image in tqdm(images):
+
+            # Read image, apply slicing if needed and return filename and img as a np array
+            img, filename = read_image(image, slicing_factor_xy, log=False)
+
+            # Extract brighfield slice
+            bf_channel = img[4]
+
+            # Add it to the bf_arrays iterable
+            bf_arrays.append(bf_channel)
+
+        # Create a stack containing all bf images
+        bf_stack = np.stack(bf_arrays, axis=0)
+
+        # Calculate the median to retain the common structures (spots, illumination)
+        bf_correction = np.median(bf_stack, axis=0)
+        del bf_stack
+
+        # Store brightfield correction as .tiff to avoid recalculating it everytime
+        imwrite(directory_path / "bf_correction.tiff",bf_correction)
+
+    return bf_correction
+
+def detect_infection_load(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_id, infection_stats):
+
+        print("Detecting infection load...")
+        # Detect Mtb spots
+        mtb_labels = mtb_segmenter.predict(img[3])
+        mtb_labels = cle.pull(mtb_labels)
+
+        # Convert mtb_labels to boolean mask
+        mtb_boolean = mtb_labels.astype(bool)
+
+        # Use NumPy's indexing to identify labels that intersect with mtb_boolean (bacterial mask)
+        infected_labels = np.unique(cytoplasm_labels[mtb_boolean])
+        infected_labels = infected_labels[infected_labels != 0]
+
+        infected_mask = np.isin(cytoplasm_labels, infected_labels)
+        non_infected_mask = np.isin(cytoplasm_labels, infected_labels, invert=True)
+        infected_cytoplasm = np.where(infected_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
+        non_infected_cytoplasm = np.where(non_infected_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
+
+        infected_cells = len(np.unique(infected_cytoplasm)) - (0 in infected_cytoplasm)
+        non_infected_cells = len(np.unique(non_infected_cytoplasm)) - (0 in non_infected_cytoplasm)
+        total_cells = cytoplasm_labels.max()
+
+        # Calculate percentage of infected cells
+        perc_inf_cells = round(infected_cells / total_cells * 100, 2) if total_cells > 0 else 0
+
+        #print(f"Non-infected: {non_infected_cells}")
+        #print(f"Infected: {infected_cells}")
+        print(f"\nTotal cells: {total_cells}")
+        print(f"Percentage infected:{perc_inf_cells}")
+
+        # Create a dictionary containing all extracted info per image
+        stats_dict = {
+                    "plate": plate_nr,
+                    "well_id": well_id,
+                    "total_nr_cells": total_cells,
+                    "infected": infected_cells,
+                    "non-infected": non_infected_cells,
+                    "%_inf_cells": perc_inf_cells 
+        }
+
+        # Append the current data point to the stats_list
+        infection_stats.append(stats_dict)
+
+        return infected_labels
+
+def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well_id, image):
+
+    print("Extracting per marker intensity information...")
+    # Empty list to populate with per channel intensity information
+    props_list = []
+
+    # Create a dictionary containing all image metadata
+    descriptor_dict = {
+        "plate": plate_nr,
+        "well_id": well_id,
+        "filepath": image
+        }
+    for channel_name, ch_nr in tqdm(markers):
+
+        # Extract intensity information from each channel
+        props = regionprops_table(label_image=cytoplasm_labels,
+                        intensity_image=img[ch_nr],
+                        properties=["label", "intensity_mean", "intensity_max", "intensity_min", "intensity_std"])
+        
+        # Convert to dataframe
+        props_df = pd.DataFrame(props)
+        
+        # Rename intensity columns to human readable format
+        props_df.rename(columns={"intensity_mean": f"Intensity_MeanIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
+        props_df.rename(columns={"intensity_max": f"Intensity_MaxIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
+        props_df.rename(columns={"intensity_min": f"Intensity_MinIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
+        props_df.rename(columns={"intensity_std": f"Intensity_StdIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
+
+        # Append each props_df to props_list
+        props_list.append(props_df)
+
+    # Initialize the df with the first df in the list
+    props_df = props_list[0]
+    # Start looping from the second df in the list
+    for df in props_list[1:]:
+        props_df = props_df.merge(df, on="label")
+
+    # Add each key-value pair from descriptor_dict to props_df at the specified position
+    insertion_position = 0
+    for key, value in descriptor_dict.items():
+        props_df.insert(insertion_position, key, value)
+        insertion_position += 1  # Increment position to maintain the order of keys in descriptor_dict
+
+    return props_df
+
+def puncta_detection(img, puncta_markers, spotiflow_model, cytoplasm_labels, props_df):
+
+    print("Detecting spots in puncta markers...")
+    for puncta_marker in puncta_markers:
+
+        # Load PixelClassifier for the corresponding puncta marker
+        puncta_cl_filename =f"./pretrained_classifiers/{puncta_marker[0]}_segmenter.cl"
+        puncta_segmenter = apoc.PixelClassifier(opencl_filename=puncta_cl_filename)
+
+        # Obtaining Spotiflow predicted points 
+        points, details = spotiflow_model.predict(img[puncta_marker[1]], subpix=True, verbose=False)
+
+        # Defining puncta signal mask
+        mask = puncta_segmenter.predict(img[puncta_marker[1]])
+
+        # Filter the predicted Spotiflow points intersecting with puncta mask
+        filtered_points = filter_points_interpolated(points, mask)
+
+        # Count how many points per cell
+        puncta_counts_df = count_points_in_labels(filtered_points, cytoplasm_labels)
+
+        # Add marker name to num_points column name
+        puncta_counts_df.rename(columns={"num_points": f"{puncta_marker[0]}_num_points"}, inplace=True)
+
+        #Merge puncta counts with the props_df containing intensity information
+        props_df = props_df.merge(
+            puncta_counts_df,
+            on="label",
+            how="left"   # keep all labels from props_df
+        )
+
+        #Fill missing counts with zero in current puncta marker column
+        props_df[f"{puncta_marker[0]}_num_points"] = props_df[f"{puncta_marker[0]}_num_points"].fillna(0).astype(int)
