@@ -264,7 +264,7 @@ def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well
         "well_id": well_id,
         "filepath": image
         }
-    for channel_name, ch_nr in tqdm(markers):
+    for channel_name, ch_nr in markers:
 
         # Extract intensity information from each channel
         props = regionprops_table(label_image=cytoplasm_labels,
