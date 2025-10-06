@@ -208,7 +208,7 @@ def brightfield_correction(directory_path, images, slicing_factor_xy):
 
 def detect_infection_load(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_id, infection_stats):
 
-        print("Detecting infection load...")
+        print("\nDetecting infection load...")
         # Detect Mtb spots
         mtb_labels = mtb_segmenter.predict(img[3])
         mtb_labels = cle.pull(mtb_labels)
@@ -234,7 +234,7 @@ def detect_infection_load(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_i
 
         #print(f"Non-infected: {non_infected_cells}")
         #print(f"Infected: {infected_cells}")
-        print(f"\nTotal cells: {total_cells}")
+        print(f"Total cells: {total_cells}")
         print(f"Percentage infected:{perc_inf_cells}")
 
         # Create a dictionary containing all extracted info per image
@@ -330,3 +330,5 @@ def puncta_detection(img, puncta_markers, spotiflow_model, cytoplasm_labels, pro
 
         #Fill missing counts with zero in current puncta marker column
         props_df[f"{puncta_marker[0]}_num_points"] = props_df[f"{puncta_marker[0]}_num_points"].fillna(0).astype(int)
+
+    return props_df
