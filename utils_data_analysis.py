@@ -31,7 +31,7 @@ def plot_plate_view(df, column_name, plate, title, label, display=True, cmap="ma
         linewidths=0.5,
         linecolor="gray",
         cbar_kws={'label': label},
-        annot=True, fmt=".0f"
+        annot=True, fmt=".3f"
     )
 
     plt.title(f"{plate} - {title}", fontsize=14)
