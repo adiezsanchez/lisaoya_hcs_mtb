@@ -9,11 +9,11 @@ version = "0.1.0"
 # Tasks
 # -------------------------
 
-[tasks]
-fix_opencl = "scripts/fix_opencl.sh"
-
 [tasks.lab]
 cmd = "jupyter lab"
+
+[tasks.split_multichannel]
+cmd = "python scripts/split_multichannel_training_data.py"
 
 # -------------------------
 # Conda-forge dependencies
