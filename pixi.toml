@@ -12,6 +12,9 @@ version = "0.1.0"
 [tasks.lab]
 cmd = "jupyter lab"
 
+[tasks.napari]
+cmd = "napari"
+
 [tasks.split_multichannel]
 cmd = "python scripts/split_multichannel_training_data.py"
 
