@@ -69,11 +69,19 @@ for image in images:
     for marker, oc, channel_nr in markers:
         
         # Define the output directory for this specific marker and optical configuration
-        save_directory = directory_path / f"{oc}_{marker}_detection_training"
+        save_directory = directory_path / f"{oc}_{marker}_detection_training" / "images"
+
+        # Create empty folder for manual annotations
+        annotations_directory = directory_path / f"{oc}_{marker}_detection_training" / "annotations"
         
-        # Create the directory if it does not exist already
+        # Create the directories if they do not exist already
         try:
             os.makedirs(save_directory)
+        except FileExistsError:
+            pass
+
+        try:
+            os.makedirs(annotations_directory)
         except FileExistsError:
             pass
         
