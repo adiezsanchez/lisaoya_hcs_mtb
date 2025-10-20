@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_plate_view(df, column_name, plate, title, label, display=True, cmap="magma"):
+def plot_plate_view(df, column_name, plate, title, label, fmt=3, display=True, cmap="magma"):
     # --- Parse well_id into row (A–H) and column (1–12) ---
     def split_well_id(well):
         match = re.match(r"([A-H])(\d{1,2})", str(well))
@@ -31,7 +31,7 @@ def plot_plate_view(df, column_name, plate, title, label, display=True, cmap="ma
         linewidths=0.5,
         linecolor="gray",
         cbar_kws={'label': label},
-        annot=True, fmt=".3f"
+        annot=True, fmt=f".{fmt}f"
     )
 
     plt.title(f"{plate} - {title}", fontsize=14)
