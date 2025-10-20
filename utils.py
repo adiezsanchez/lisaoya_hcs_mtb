@@ -176,8 +176,11 @@ def brightfield_correction(directory_path, images, slicing_factor_xy):
     try:
 
         bf_correction = imread(directory_path / "bf_correction.tiff")
+        print("Brightfield correction image found.")
 
     except FileNotFoundError:
+
+        print("Generating brightfield correction image...")
 
         # Create an empty list to store the brightfield images from each well
         bf_arrays = []
