@@ -306,7 +306,7 @@ def puncta_detection(img, puncta_markers, spotiflow_model, cytoplasm_labels, pro
     for puncta_marker in puncta_markers:
 
         # Load PixelClassifier for the corresponding puncta marker
-        puncta_cl_filename =f"./pretrained_classifiers/{puncta_marker[0]}_segmenter.cl"
+        puncta_cl_filename =f"./pretrained_classifiers/no_nuclei_signal/siMtb screen I_LØ/{puncta_marker[0]}_segmenter.cl"
         puncta_segmenter = apoc.PixelClassifier(opencl_filename=puncta_cl_filename)
 
         # Obtaining Spotiflow predicted points 
