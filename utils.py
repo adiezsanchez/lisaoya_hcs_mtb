@@ -110,7 +110,7 @@ def filter_points_interpolated(points, predicted_labels, threshold=1.8):
     keep = values >= threshold
     return points[keep]
 
-def count_points_in_labels(points, cytoplasm_labels):
+def count_points_in_labels(points, cell_labels):
     """
     Count how many Spotiflow points fall inside each cytoplasm label.
 
@@ -132,7 +132,7 @@ def count_points_in_labels(points, cytoplasm_labels):
     ----------
     points : ndarray, shape (N, 2)
         Spotiflow points in (row, col) = (y, x) order.
-    cytoplasm_labels : ndarray, shape (H, W)
+    cell_labels : ndarray, shape (H, W)
         Label image with integer IDs for each segmented cell.
 
     Returns
@@ -148,15 +148,15 @@ def count_points_in_labels(points, cytoplasm_labels):
     x, y = points_int[:, 1], points_int[:, 0]  # swap for [y, x] indexing
 
     # Keep only points inside image bounds
-    H, W = cytoplasm_labels.shape
+    H, W = cell_labels.shape
     valid = (x >= 0) & (x < W) & (y >= 0) & (y < H)
     x, y = x[valid], y[valid]
 
     # Get label IDs at point locations
-    labels_at_points = cytoplasm_labels[y, x]
+    labels_at_points = cell_labels[y, x]
 
     # Count efficiently with bincount
-    max_label = cytoplasm_labels.max()
+    max_label = cell_labels.max()
     counts = np.bincount(labels_at_points, minlength=max_label + 1)
 
     # Build DataFrame (skip background label 0)
@@ -209,7 +209,7 @@ def brightfield_correction(directory_path, images, slicing_factor_xy):
 
     return bf_correction
 
-def detect_infected_cells(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_id, infection_stats):
+def detect_infected_cells(img, mtb_segmenter, cell_labels, plate_nr, well_id, infection_stats):
 
         print("\nDetecting infected cells...")
         # Detect Mtb spots
@@ -220,17 +220,17 @@ def detect_infected_cells(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_i
         mtb_boolean = mtb_labels.astype(bool)
 
         # Use NumPy's indexing to identify labels that intersect with mtb_boolean (bacterial mask)
-        infected_labels = np.unique(cytoplasm_labels[mtb_boolean])
+        infected_labels = np.unique(cell_labels[mtb_boolean])
         infected_labels = infected_labels[infected_labels != 0]
 
-        infected_mask = np.isin(cytoplasm_labels, infected_labels)
-        non_infected_mask = np.isin(cytoplasm_labels, infected_labels, invert=True)
-        infected_cytoplasm = np.where(infected_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
-        non_infected_cytoplasm = np.where(non_infected_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
+        infected_mask = np.isin(cell_labels, infected_labels)
+        non_infected_mask = np.isin(cell_labels, infected_labels, invert=True)
+        infected_cytoplasm = np.where(infected_mask, cell_labels, 0).astype(cell_labels.dtype)
+        non_infected_cytoplasm = np.where(non_infected_mask, cell_labels, 0).astype(cell_labels.dtype)
 
         infected_cells = len(np.unique(infected_cytoplasm)) - (0 in infected_cytoplasm)
         non_infected_cells = len(np.unique(non_infected_cytoplasm)) - (0 in non_infected_cytoplasm)
-        total_cells = cytoplasm_labels.max()
+        total_cells = cell_labels.max()
 
         # Calculate percentage of infected cells
         perc_inf_cells = round(infected_cells / total_cells * 100, 2) if total_cells > 0 else 0
@@ -294,7 +294,7 @@ def extract_mtb_regionprops(mtb_labels, plate_nr, well_id, image):
 
     return props_df
 
-def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well_id, image):
+def extract_intensity_information(img, cell_labels, markers, plate_nr, well_id, image):
 
     print("Extracting per marker intensity information...")
     # Empty list to populate with per channel intensity information
@@ -309,7 +309,7 @@ def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well
     for channel_name, ch_nr in markers:
 
         # Extract intensity information from each channel
-        props = regionprops_table(label_image=cytoplasm_labels,
+        props = regionprops_table(label_image=cell_labels,
                         intensity_image=img[ch_nr],
                         properties=["label", "intensity_mean", "intensity_max", "intensity_min", "intensity_std"])
         
@@ -339,7 +339,7 @@ def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well
 
     return props_df
 
-def puncta_detection(img, puncta_markers, spotiflow_model, cytoplasm_labels, props_df):
+def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df):
 
     print("Detecting spots in puncta markers...")
     for puncta_marker in puncta_markers:
@@ -358,7 +358,7 @@ def puncta_detection(img, puncta_markers, spotiflow_model, cytoplasm_labels, pro
         filtered_points = filter_points_interpolated(points, mask)
 
         # Count how many points per cell
-        puncta_counts_df = count_points_in_labels(filtered_points, cytoplasm_labels)
+        puncta_counts_df = count_points_in_labels(filtered_points, cell_labels)
 
         # Add marker name to num_points column name
         puncta_counts_df.rename(columns={"num_points": f"{puncta_marker[0]}_num_points"}, inplace=True)
