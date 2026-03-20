@@ -294,6 +294,48 @@ def extract_mtb_regionprops(mtb_labels, plate_nr, well_id, image):
 
     return props_df
 
+def map_bacterial_location(mtb_labels, cell_labels, mtb_props_df):
+    """Map mtb_labels to different locations: out of cell, cell, membrane, cytoplasm"""
+
+    # Generate membrane and cytoplasm labels from cell_labels
+    membrane_labels = cle.reduce_labels_to_label_edges(cell_labels)
+    membrane_labels = cle.pull(membrane_labels)
+    cytoplasm_labels = cle.erode_labels(cell_labels, radius=1)
+    cytoplasm_labels = cle.pull(cytoplasm_labels)
+
+    # Convert cell and subcellular labels to boolean mask
+    cell_boolean = cell_labels.astype(bool)
+    membrane_boolean = membrane_labels.astype(bool)
+    cytoplasm_boolean = cytoplasm_labels.astype(bool)
+
+    # Use Numpy's indexing to identify mtb_labels that intersect with the different locations
+    mtb_labels_in_cell = np.unique(mtb_labels[cell_boolean])
+    mtb_labels_in_cell = mtb_labels_in_cell[mtb_labels_in_cell != 0] # Drop background 
+    mtb_labels_in_cytoplasm = np.unique(mtb_labels[cytoplasm_boolean])
+    mtb_labels_in_cytoplasm = mtb_labels_in_cytoplasm[mtb_labels_in_cytoplasm != 0] # Drop background 
+    mtb_labels_in_membrane = np.unique(mtb_labels[membrane_boolean])
+    mtb_labels_in_membrane = mtb_labels_in_membrane[mtb_labels_in_membrane != 0] # Drop background
+
+    # Reverse logic for mtb_labels outside of cell
+    all_mtb = np.unique(mtb_labels)
+    all_mtb = all_mtb[all_mtb != 0]
+    mtb_labels_outside = np.setdiff1d(all_mtb, mtb_labels_in_cell)
+
+    # Rename label(id) to CellProfiler format ObjectNumber
+    mtb_props_df.rename(columns={"label": "ObjectNumber"}, inplace=True)
+
+    # Add infected flags to props_df based on cellular location
+    # Find position of "ObjectNumber" column
+    col_idx = mtb_props_df.columns.get_loc("ObjectNumber")
+
+    # Insert new column right after "ObjectNumber"
+    mtb_props_df.insert(col_idx + 1, "location_cell", mtb_props_df["ObjectNumber"].isin(mtb_labels_in_cell))
+    mtb_props_df.insert(col_idx + 2, "location_cytoplasm", mtb_props_df["ObjectNumber"].isin(mtb_labels_in_cytoplasm))
+    mtb_props_df.insert(col_idx + 3, "location_membrane", mtb_props_df["ObjectNumber"].isin(mtb_labels_in_membrane))
+    mtb_props_df.insert(col_idx + 4, "location_extracellular", mtb_props_df["ObjectNumber"].isin(mtb_labels_outside))
+    
+    return mtb_props_df
+
 def extract_intensity_information(img, cell_labels, markers, plate_nr, well_id, image):
 
     print("Extracting per marker intensity information...")
