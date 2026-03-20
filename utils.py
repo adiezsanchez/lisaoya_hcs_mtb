@@ -253,7 +253,7 @@ def detect_infected_cells(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_i
         # Append the current data point to the stats_list
         infection_stats.append(stats_dict)
 
-        return infected_labels
+        return mtb_labels, infected_labels
 
 def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well_id, image):
 
