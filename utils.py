@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import nd2
 from tifffile import imread, imwrite
 from tqdm import tqdm
@@ -10,6 +11,32 @@ import pyclesperanto_prototype as cle
 import apoc
 
 cle.select_device("RTX")
+
+def create_results_folders(main_directory_path):
+
+    folders_to_create = []
+
+    # Create results directory
+    experiment_id = main_directory_path.stem
+
+    # Create a 'results' folder in the root directory
+    results_infection_folder = Path("results") / experiment_id / "sum_infection_results"
+    results_per_cell_label_folder = Path("results") / experiment_id / "per_cell_label_results"
+    results_per_bacteria_label_folder = Path("results") / experiment_id / "per_bacteria_label_results"
+
+    # Append to the folders to create list
+    folders_to_create.append(results_infection_folder)
+    folders_to_create.append(results_per_cell_label_folder)
+    folders_to_create.append(results_per_bacteria_label_folder)
+
+    for path in folders_to_create:
+        try:
+            os.makedirs(path)
+            print(f"'{path}' folder created successfully.")
+        except FileExistsError:
+            print(f"'{path}' folder already exists.")
+
+    return results_infection_folder, results_per_cell_label_folder, results_per_bacteria_label_folder
 
 def list_images (directory_path, format=None):
 
