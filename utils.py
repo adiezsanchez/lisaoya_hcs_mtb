@@ -209,9 +209,9 @@ def brightfield_correction(directory_path, images, slicing_factor_xy):
 
     return bf_correction
 
-def detect_infection_load(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_id, infection_stats):
+def detect_infected_cells(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_id, infection_stats):
 
-        print("\nDetecting infection load...")
+        print("\nDetecting infected cells...")
         # Detect Mtb spots
         mtb_labels = mtb_segmenter.predict(img[3])
         mtb_labels = cle.pull(mtb_labels)
