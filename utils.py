@@ -255,6 +255,45 @@ def detect_infected_cells(img, mtb_segmenter, cytoplasm_labels, plate_nr, well_i
 
         return mtb_labels, infected_labels
 
+def extract_mtb_regionprops(mtb_labels, plate_nr, well_id, image):
+
+    print("Extracting Mtb properties...")
+
+    # Single list of regionprops to request (modify based on needs)
+    regionprops_properties = [
+        "label",
+        "area",                          # number of voxels (volume in voxel units)
+        "axis_major_length",             # length of major axis from inertia tensor (elongation)
+        "axis_minor_length",             # length of minor axis (second principal axis in 3D)
+        "equivalent_diameter_area",      # diameter of sphere with same volume as region
+        "euler_number",                  # topology: objects + holes − tunnels (connectivity)
+        "extent",                        # volume / bounding-box volume (fill of the box)
+        "feret_diameter_max",            # maximum Feret (caliper) diameter
+        "solidity"                      # volume / convex-hull volume (compact vs lobed)
+    ]
+
+    # Create a dictionary containing all image metadata
+    descriptor_dict = {
+        "plate": plate_nr,
+        "well_id": well_id,
+        "filepath": image
+        }
+
+    # Extract morphological features from bacterial labels (mtb_labels)
+    props = regionprops_table(label_image=mtb_labels,
+                        properties=regionprops_properties)
+
+    # Convert to dataframe
+    props_df = pd.DataFrame(props)
+
+    # Add each key-value pair from descriptor_dict to props_df at the specified position
+    insertion_position = 0
+    for key, value in descriptor_dict.items():
+        props_df.insert(insertion_position, key, value)
+        insertion_position += 1  # Increment position to maintain the order of keys in descriptor_dict
+
+    return props_df
+
 def extract_intensity_information(img, cytoplasm_labels, markers, plate_nr, well_id, image):
 
     print("Extracting per marker intensity information...")
