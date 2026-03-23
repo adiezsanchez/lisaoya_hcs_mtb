@@ -511,8 +511,9 @@ def detect_infection_load(mtb_labels, cell_labels, props_df):
 
     return out
 
-def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df):
+def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df, return_points=False):
 
+    puncta_points = {} if return_points else None
     print("Detecting spots in puncta markers...")
     for puncta_marker in puncta_markers:
 
@@ -528,6 +529,8 @@ def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df
 
         # Filter the predicted Spotiflow points intersecting with puncta mask
         filtered_points = filter_points_interpolated(points, mask)
+        if return_points:
+            puncta_points[puncta_marker[0]] = filtered_points
 
         # Count how many points per cell
         puncta_counts_df = count_points_in_labels(filtered_points, cell_labels)
@@ -545,4 +548,6 @@ def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df
         #Fill missing counts with zero in current puncta marker column
         props_df[f"{puncta_marker[0]}_num_points"] = props_df[f"{puncta_marker[0]}_num_points"].fillna(0).astype(int)
 
+    if return_points:
+        return props_df, puncta_points
     return props_df
