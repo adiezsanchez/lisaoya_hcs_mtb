@@ -467,6 +467,50 @@ def extract_cell_features(img, cell_labels, markers, plate_nr, well_id, image):
 
     return props_df
 
+def detect_infection_load(mtb_labels, cell_labels, props_df):
+    """Sum of Mtb (foreground) pixels per cell, left-join onto props_df, plus %_bacterial_load vs cell area."""
+
+    # Non-zero Mtb voxels become True so we count bacterial footprint regardless of label id
+    mtb_mask = np.asarray(mtb_labels).astype(bool)
+    cell_labels = np.asarray(cell_labels)
+
+    # Per-pixel overlap only makes sense when both arrays align spatially
+    if mtb_mask.shape != cell_labels.shape:
+        raise ValueError(
+            f"mtb_labels shape {mtb_mask.shape} does not match cell_labels shape {cell_labels.shape}"
+        )
+
+    max_label = int(cell_labels.max())
+    if max_label <= 0:
+        # No segmented cells: nothing to aggregate, merge will only add an empty column
+        load_df = pd.DataFrame(columns=["label", "mtb_area_sum"])
+    else:
+        # Cell id at each Mtb pixel; bincount gives Mtb pixel count per cell label index
+        masked_cells = cell_labels[mtb_mask].ravel().astype(np.int64)
+        counts = np.bincount(masked_cells, minlength=max_label + 1)
+        cell_label_ids = np.unique(cell_labels)
+        cell_label_ids = cell_label_ids[cell_label_ids != 0]
+        load_df = pd.DataFrame(
+            {
+                "label": cell_label_ids.astype(int),
+                "mtb_area_sum": counts[cell_label_ids].astype(np.int64),
+            }
+        )
+
+    # Keep every props_df row; add mtb_area_sum where labels match
+    out = props_df.merge(load_df, on="label", how="left")
+    # Cells with no overlapping Mtb get NaN from the left merge — treat as zero load
+    out["mtb_area_sum"] = out["mtb_area_sum"].fillna(0).astype(np.int64)
+
+    # Share of cell region area (regionprops "area") covered by Mtb foreground pixels
+    out["%_bacterial_load"] = np.where(
+        out["area"] > 0,
+        np.round(out["mtb_area_sum"] / out["area"] * 100, 2),
+        0.0,
+    )
+
+    return out
+
 def puncta_detection(img, puncta_markers, spotiflow_model, cell_labels, props_df):
 
     print("Detecting spots in puncta markers...")
