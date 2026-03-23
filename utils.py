@@ -237,8 +237,14 @@ def brightfield_correction(directory_path, images, slicing_factor_xy):
     return bf_correction
 
 def detect_infected_cells(img, mtb_segmenter, cell_labels, plate_nr, well_id, infection_stats):
+        """Detect infected cells and subcellular compartments"""
+        print("\nDetecting infected cells and subcellular compartments...")
+        # Generate membrane and cytoplasm labels from cell_labels
+        membrane_labels = cle.reduce_labels_to_label_edges(cell_labels)
+        membrane_labels = cle.pull(membrane_labels)
+        cytoplasm_labels = cle.erode_labels(cell_labels, radius=1)
+        cytoplasm_labels = cle.pull(cytoplasm_labels)
 
-        print("\nDetecting infected cells...")
         # Detect Mtb spots
         mtb_labels = mtb_segmenter.predict(img[3])
         mtb_labels = cle.pull(mtb_labels)
@@ -246,24 +252,54 @@ def detect_infected_cells(img, mtb_segmenter, cell_labels, plate_nr, well_id, in
         # Convert mtb_labels to boolean mask
         mtb_boolean = mtb_labels.astype(bool)
 
-        # Use NumPy's indexing to identify labels that intersect with mtb_boolean (bacterial mask)
-        infected_labels = np.unique(cell_labels[mtb_boolean])
-        infected_labels = infected_labels[infected_labels != 0]
+        # Use NumPy's indexing to identify cell labels that intersect with mtb_boolean (bacterial mask)
+        infected_cell_labels = np.unique(cell_labels[mtb_boolean])
+        infected_cell_labels = infected_cell_labels[infected_cell_labels != 0]
 
-        infected_mask = np.isin(cell_labels, infected_labels)
-        non_infected_mask = np.isin(cell_labels, infected_labels, invert=True)
-        infected_cytoplasm = np.where(infected_mask, cell_labels, 0).astype(cell_labels.dtype)
-        non_infected_cytoplasm = np.where(non_infected_mask, cell_labels, 0).astype(cell_labels.dtype)
+        # Use NumPy's indexing to identify membrane labels that intersect with mtb_boolean (bacterial mask)
+        infected_membrane_labels = np.unique(membrane_labels[mtb_boolean])
+        infected_membrane_labels = infected_membrane_labels[infected_membrane_labels != 0]
 
-        infected_cells = len(np.unique(infected_cytoplasm)) - (0 in infected_cytoplasm)
-        non_infected_cells = len(np.unique(non_infected_cytoplasm)) - (0 in non_infected_cytoplasm)
+        # Use NumPy's indexing to identify cytoplasm labels that intersect with mtb_boolean (bacterial mask)
+        infected_cytoplasm_labels = np.unique(cytoplasm_labels[mtb_boolean])
+        infected_cytoplasm_labels = infected_cytoplasm_labels[infected_cytoplasm_labels != 0]
+
+        # Extract stats for each cell and subcellular compartment
+        infected_cell_mask = np.isin(cell_labels, infected_cell_labels)
+        non_infected_cell_mask = np.isin(cell_labels, infected_cell_labels, invert=True)
+        infected_cells_array = np.where(infected_cell_mask, cell_labels, 0).astype(cell_labels.dtype)
+        non_infected_cells_array = np.where(non_infected_cell_mask, cell_labels, 0).astype(cell_labels.dtype)
+
+        infected_membrane_mask = np.isin(membrane_labels, infected_membrane_labels)
+        non_infected_membrane_mask = np.isin(membrane_labels, infected_membrane_labels, invert=True)
+        infected_membranes_array = np.where(infected_membrane_mask, membrane_labels, 0).astype(membrane_labels.dtype)
+        non_infected_membranes_array = np.where(non_infected_membrane_mask, membrane_labels, 0).astype(membrane_labels.dtype)
+
+        infected_cytoplasm_mask = np.isin(cytoplasm_labels, infected_cytoplasm_labels)
+        non_infected_cytoplasm_mask = np.isin(cytoplasm_labels, infected_cytoplasm_labels, invert=True)
+        infected_cytoplasms_array = np.where(infected_cytoplasm_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
+        non_infected_cytoplasms_array = np.where(non_infected_cytoplasm_mask, cytoplasm_labels, 0).astype(cytoplasm_labels.dtype)
+
+        infected_cells = len(np.unique(infected_cells_array)) - (0 in infected_cells_array)
+        non_infected_cells = len(np.unique(non_infected_cells_array)) - (0 in non_infected_cells_array)
         total_cells = cell_labels.max()
 
-        # Calculate percentage of infected cells
-        perc_inf_cells = round(infected_cells / total_cells * 100, 2) if total_cells > 0 else 0
+        infected_membranes = len(np.unique(infected_membranes_array)) - (0 in infected_membranes_array)
+        non_infected_membranes = len(np.unique(non_infected_membranes_array)) - (0 in non_infected_membranes_array)
+        total_membranes = len(np.unique(membrane_labels[membrane_labels != 0]))
 
-        #print(f"Non-infected: {non_infected_cells}")
-        #print(f"Infected: {infected_cells}")
+        infected_cytoplasms = len(np.unique(infected_cytoplasms_array)) - (0 in infected_cytoplasms_array)
+        non_infected_cytoplasms = len(np.unique(non_infected_cytoplasms_array)) - (0 in non_infected_cytoplasms_array)
+        total_cytoplasms = len(np.unique(cytoplasm_labels[cytoplasm_labels != 0]))
+
+        # Calculate percentage of infected cells / membrane / cytoplasm regions
+        perc_inf_cells = round(infected_cells / total_cells * 100, 2) if total_cells > 0 else 0
+        perc_inf_membranes = round(infected_membranes / total_membranes * 100, 2) if total_membranes > 0 else 0
+        perc_inf_cytoplasms = round(infected_cytoplasms / total_cytoplasms * 100, 2) if total_cytoplasms > 0 else 0
+        # Share of segmented cells with Mtb in cytoplasm or on membrane (same denominator as whole-cell infection)
+        perc_cytoplasm_inf_cells = (round(infected_cytoplasms / total_cells * 100, 2) if total_cells > 0 else 0)
+        perc_membrane_inf_cells = (round(infected_membranes / total_cells * 100, 2) if total_cells > 0 else 0)
+
         print(f"Total cells: {total_cells}")
         print(f"Percentage infected:{perc_inf_cells}")
 
@@ -272,15 +308,25 @@ def detect_infected_cells(img, mtb_segmenter, cell_labels, plate_nr, well_id, in
                     "plate": plate_nr,
                     "well_id": well_id,
                     "total_nr_cells": total_cells,
-                    "infected": infected_cells,
-                    "non-infected": non_infected_cells,
-                    "%_inf_cells": perc_inf_cells 
+                    "infected_cells": infected_cells,
+                    "non-infected_cells": non_infected_cells,
+                    "%_inf_cells": perc_inf_cells,
+                    "total_nr_membranes": total_membranes,
+                    "infected_membranes": infected_membranes,
+                    "non-infected_membranes": non_infected_membranes,
+                    "%_inf_membranes": perc_inf_membranes,
+                    "total_nr_cytoplasms": total_cytoplasms,
+                    "infected_cytoplasms": infected_cytoplasms,
+                    "non-infected_cytoplasms": non_infected_cytoplasms,
+                    "%_inf_cytoplasms": perc_inf_cytoplasms,
+                    "%_cytoplasm_inf_cells": perc_cytoplasm_inf_cells,
+                    "%_membrane_inf_cells": perc_membrane_inf_cells,
         }
 
         # Append the current data point to the stats_list
         infection_stats.append(stats_dict)
 
-        return mtb_labels, infected_labels
+        return mtb_labels, membrane_labels, cytoplasm_labels, infected_cell_labels, infected_membrane_labels, infected_cytoplasm_labels
 
 def extract_mtb_regionprops(mtb_labels, plate_nr, well_id, image):
 
@@ -321,14 +367,8 @@ def extract_mtb_regionprops(mtb_labels, plate_nr, well_id, image):
 
     return props_df
 
-def map_bacterial_location(mtb_labels, cell_labels, mtb_props_df):
+def map_bacterial_location(mtb_labels, cell_labels, membrane_labels, cytoplasm_labels, mtb_props_df):
     """Map mtb_labels to different locations: out of cell, cell, membrane, cytoplasm"""
-
-    # Generate membrane and cytoplasm labels from cell_labels
-    membrane_labels = cle.reduce_labels_to_label_edges(cell_labels)
-    membrane_labels = cle.pull(membrane_labels)
-    cytoplasm_labels = cle.erode_labels(cell_labels, radius=1)
-    cytoplasm_labels = cle.pull(cytoplasm_labels)
 
     # Convert cell and subcellular labels to boolean mask
     cell_boolean = cell_labels.astype(bool)
