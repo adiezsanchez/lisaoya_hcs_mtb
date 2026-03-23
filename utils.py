@@ -405,9 +405,18 @@ def map_bacterial_location(mtb_labels, cell_labels, membrane_labels, cytoplasm_l
 
 def extract_cell_features(img, cell_labels, markers, plate_nr, well_id, image):
 
-    print("Extracting per marker intensity information...")
+    print("Extracting cell morphology and per-marker intensity...")
+
     # Define features to extract
-    regionprops_properties = [
+    regionprops_intensity_properties = [
+    "label",
+    "intensity_mean",
+    "intensity_min",
+    "intensity_max",
+    "intensity_std",
+    ]
+
+    regionprops_morphological_properties = [
     "label",
     "area",                          # number of voxels (volume in voxel units)
     "area_bbox",                     # volume of axis-aligned bounding box
@@ -419,16 +428,11 @@ def extract_cell_features(img, cell_labels, markers, plate_nr, well_id, image):
     "euler_number",                  # topology: objects + holes − tunnels (connectivity)
     "extent",                        # volume / bounding-box volume (fill of the box)
     "feret_diameter_max",            # maximum Feret (caliper) diameter
-    "solidity",                      # volume / convex-hull volume (compact vs lobed)
-    "inertia_tensor_eigvals",        # eigenvalues of inertia tensor (3 values: shape/orientation)
-    "intensity_mean",
-    "intensity_min",
-    "intensity_max",
-    "intensity_std",
+    "solidity"                      # volume / convex-hull volume (compact vs lobed)
     ]
 
-    # Empty list to populate with per channel intensity information
-    props_list = []
+    morph_props = regionprops_table(label_image=cell_labels, properties=regionprops_morphological_properties)
+    props_df = pd.DataFrame(morph_props)
 
     # Create a dictionary containing all image metadata
     descriptor_dict = {
@@ -438,28 +442,22 @@ def extract_cell_features(img, cell_labels, markers, plate_nr, well_id, image):
         }
     for channel_name, ch_nr in markers:
 
-        # Extract intensity information from each channel
-        props = regionprops_table(label_image=cell_labels,
-                        intensity_image=img[ch_nr],
-                        properties=regionprops_properties)
-        
-        # Convert to dataframe
-        props_df = pd.DataFrame(props)
-        
-        # Rename intensity columns to human readable format
-        props_df.rename(columns={"intensity_mean": f"Intensity_MeanIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
-        props_df.rename(columns={"intensity_max": f"Intensity_MaxIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
-        props_df.rename(columns={"intensity_min": f"Intensity_MinIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
-        props_df.rename(columns={"intensity_std": f"Intensity_StdIntensity_Cytoplasm_{channel_name}_ch{ch_nr}"}, inplace=True)
-
-        # Append each props_df to props_list
-        props_list.append(props_df)
-
-    # Initialize the df with the first df in the list
-    props_df = props_list[0]
-    # Start looping from the second df in the list
-    for df in props_list[1:]:
-        props_df = props_df.merge(df, on="label")
+        props = regionprops_table(
+            label_image=cell_labels,
+            intensity_image=img[ch_nr],
+            properties=regionprops_intensity_properties,
+        )
+        ch_df = pd.DataFrame(props)
+        ch_df.rename(
+            columns={
+                "intensity_mean": f"Intensity_MeanIntensity_Cytoplasm_{channel_name}_ch{ch_nr}",
+                "intensity_max": f"Intensity_MaxIntensity_Cytoplasm_{channel_name}_ch{ch_nr}",
+                "intensity_min": f"Intensity_MinIntensity_Cytoplasm_{channel_name}_ch{ch_nr}",
+                "intensity_std": f"Intensity_StdIntensity_Cytoplasm_{channel_name}_ch{ch_nr}",
+            },
+            inplace=True,
+        )
+        props_df = props_df.merge(ch_df, on="label")
 
     # Add each key-value pair from descriptor_dict to props_df at the specified position
     insertion_position = 0
