@@ -403,9 +403,30 @@ def map_bacterial_location(mtb_labels, cell_labels, membrane_labels, cytoplasm_l
     
     return mtb_props_df
 
-def extract_intensity_information(img, cell_labels, markers, plate_nr, well_id, image):
+def extract_cell_features(img, cell_labels, markers, plate_nr, well_id, image):
 
     print("Extracting per marker intensity information...")
+    # Define features to extract
+    regionprops_properties = [
+    "label",
+    "area",                          # number of voxels (volume in voxel units)
+    "area_bbox",                     # volume of axis-aligned bounding box
+    "area_convex",                   # volume of convex hull of the region
+    "area_filled",                   # volume after filling holes
+    "axis_major_length",             # length of major axis from inertia tensor (elongation)
+    "axis_minor_length",             # length of minor axis (second principal axis in 3D)
+    "equivalent_diameter_area",      # diameter of sphere with same volume as region
+    "euler_number",                  # topology: objects + holes − tunnels (connectivity)
+    "extent",                        # volume / bounding-box volume (fill of the box)
+    "feret_diameter_max",            # maximum Feret (caliper) diameter
+    "solidity",                      # volume / convex-hull volume (compact vs lobed)
+    "inertia_tensor_eigvals",        # eigenvalues of inertia tensor (3 values: shape/orientation)
+    "intensity_mean",
+    "intensity_min",
+    "intensity_max",
+    "intensity_std",
+    ]
+
     # Empty list to populate with per channel intensity information
     props_list = []
 
@@ -420,7 +441,7 @@ def extract_intensity_information(img, cell_labels, markers, plate_nr, well_id, 
         # Extract intensity information from each channel
         props = regionprops_table(label_image=cell_labels,
                         intensity_image=img[ch_nr],
-                        properties=["label", "intensity_mean", "intensity_max", "intensity_min", "intensity_std"])
+                        properties=regionprops_properties)
         
         # Convert to dataframe
         props_df = pd.DataFrame(props)
