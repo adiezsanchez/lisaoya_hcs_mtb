@@ -64,9 +64,19 @@ seaborn = ">=0.13.2,<0.14"
 ocl-icd-system = "*"  # ICD to discover vendor OpenCL implementations
 ffmpeg = ">=4.4.2,<5" # satisfy libopencv (conda-forge)
 
+# BLAS: linux-64 NumPy uses MKL libblas; win-64 often resolves netlib libblas. Forcing MKL libblas on
+# win-64 is unsatisfiable with pytorch==2.5.0 (win build requires mkl 2023.1.* while conda-forge
+# libblas *mkl* builds require a different MKL lineage). Netlib-on-linux is unsatisfiable (linux
+# pytorch requires blas * mkl). Alignment is limited to identical PyPI pins below + same pytorch/cuda.
+
 # -------------------------
-# PyPI deps
+# PyPI deps (both platforms — Spotiflow stack)
 # -------------------------
 
 [pypi-dependencies]
 spotiflow = "==0.6.1"
+lightning = "==2.5.5"
+pytorch-lightning = "==2.5.5"
+lightning-utilities = "==0.15.2"
+torchmetrics = "==1.8.2"
+csbdeep = "==0.8.1"
