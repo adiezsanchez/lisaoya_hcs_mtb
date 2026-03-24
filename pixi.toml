@@ -20,6 +20,9 @@ LD_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/.pixi/envs/default/lib:/usr/lib/x86_64-lin
 fix_opencl = "scripts/fix_opencl.sh"
 fix_opencl_hpc = "scripts/fix_opencl_hpc.sh"
 
+[tasks.test_gpu]
+cmd = "python tests/test_gpu.py"
+
 [tasks.lab]
 cmd = "jupyter lab"
 
@@ -34,7 +37,7 @@ cmd = "python scripts/split_multichannel_training_data.py"
 # -------------------------
 
 [dependencies]
-python = ">=3.10" # freeze Python version
+python = "3.10.*" # freeze Python version
 pytorch = "==2.5.0"
 pytorch-cuda = "12.1.*"
 torchvision = "==0.20.0"
@@ -43,8 +46,8 @@ apoc-backend = "*" # fast GPU classifiers (APOC)
 edt = "*" # Euclidean distance transforms
 ipykernel = "*" # Jupyter kernel support
 ipython = "*" # interactive shell
-jupyterlab = "*" # Jupyter environment
-napari = "*" # image viewer
+jupyterlab = "*" # Jupyter environmentpix
+napari = "==0.5.4" # image viewer
 nbformat = "*" # notebook parsing
 nd2 = "*" # Nikon ND2 image reader
 plotly = "*" # plotting library
@@ -66,4 +69,4 @@ ffmpeg = ">=4.4.2,<5" # satisfy libopencv (conda-forge)
 # -------------------------
 
 [pypi-dependencies]
-spotiflow = "*"
+spotiflow = "==0.6.1"
