@@ -2,12 +2,23 @@
 authors = ["adiezsanchez <adiez.biotech@gmail.com>"]
 channels = ["pytorch", "nvidia", "conda-forge"]
 name = "lisaoya_hcs_mtb"
-platforms = ["win-64"]
+platforms = ["linux-64", "win-64"]
 version = "0.1.0"
+
+# -------------------------
+# Activation-level environment (applies to all tasks)
+# -------------------------
+[activation.env]
+# GPU (PyTorch CUDA + OpenCL): env lib first (CUDA runtime), then system (libcuda.so, libnvidia-opencl.so)
+LD_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/.pixi/envs/default/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 
 # -------------------------
 # Tasks
 # -------------------------
+
+[tasks]
+fix_opencl = "scripts/fix_opencl.sh"
+fix_opencl_hpc = "scripts/fix_opencl_hpc.sh"
 
 [tasks.lab]
 cmd = "jupyter lab"
@@ -41,6 +52,14 @@ pyclesperanto-prototype = "*" # GPU image processing (OpenCL)
 pyqt = "*" # GUI backend for napari
 setuptools = "<81" # pin to avoid pkg_resources removal
 seaborn = ">=0.13.2,<0.14"
+
+# -------------------------
+# Platform-specific deps
+# -------------------------
+
+[target.linux-64.dependencies]
+ocl-icd-system = "*"  # ICD to discover vendor OpenCL implementations
+ffmpeg = ">=4.4.2,<5" # satisfy libopencv (conda-forge)
 
 # -------------------------
 # PyPI deps
