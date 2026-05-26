@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_plate_view(df, column_name, plate, title, label, fmt=3, display=True, cmap="magma"):
+def plot_plate_view(df, results_path, column_name, plate, title, label, population=None, compartment=None, fmt=3, display=True, cmap="magma"):
     # --- Parse well_id into row (A–H) and column (1–12) ---
     def split_well_id(well):
         match = re.match(r"([A-H])(\d{1,2})", str(well))
@@ -42,16 +42,23 @@ def plot_plate_view(df, column_name, plate, title, label, fmt=3, display=True, c
     ax.set_yticklabels(ax.get_yticklabels(), rotation=-90, va="center")
 
     # --- Save plot ---
-    save_dir = f"./results/plate_view/{column_name}"
+    if population is None:
+        save_dir = f"./{results_path}/plate_view/{column_name}"
+    else:
+        save_dir = f"./{results_path}/plate_view/{column_name}_{population}"
     os.makedirs(save_dir, exist_ok=True)
-    save_path = os.path.join(save_dir, f"{plate}_{column_name}.png")
+
+    if population is None and compartment is not None:
+        save_path = os.path.join(save_dir, f"{plate}_{column_name}_{compartment}.png")
+    elif population is not None and compartment is None:
+        save_path = os.path.join(save_dir, f"{plate}_{column_name}_{population}.png")
+    elif population is None and compartment is None:
+        save_path = os.path.join(save_dir, f"{plate}_{column_name}.png")
+    else:
+        save_path = os.path.join(save_dir, f"{plate}_{column_name}_{compartment}_{population}.png")
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
 
     if display:
         plt.show()
     else:
         plt.close()
-
-    print(f"Saved plate view to {save_path}")
-
-
