@@ -1,6 +1,6 @@
 # (HCS-MTB) - High-content screening analysis of *M. tuberculosis* infection in 2D cell cultures
 
-[![DOI](https://zenodo.org/badge/1002907746.svg)](https://doi.org/10.5281/zenodo.20411946)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.20411946-blue.svg)](https://doi.org/10.5281/zenodo.20411946)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3-green.svg)](https://github.com/adiezsanchez/lisaoya_hcs_mtb/blob/main/LICENSE)
 
 A GPU-accelerated pipeline for automated analysis of multichannel 2D fluorescence images from a high-content screening (HCS) assay acquired on a Nikon Crestoptics V3 spinning-disk confocal. The workflow segments cells with [CellposeSAM](https://github.com/mouseland/cellpose), detects *Mtb* bacteria (using [APOC ObjectSegmenter](https://github.com/haesleinhuepf/apoc)) and autophagy-related puncta (LC3B, GAL3, Chmp4B - using [Spotiflow](https://github.com/weigertlab/spotiflow)), quantifies per-cell and per-bacterium features, and exports plate-level CSV summaries for downstream heatmaps and exploratory plots.
@@ -206,7 +206,7 @@ Batch results were aggregated per plate into infection-summary, per-cell, and pe
 
 <h2> How to cite this pipeline </h2>
 
-[![DOI](https://zenodo.org/badge/1002907746.svg)](https://doi.org/10.5281/zenodo.20411946)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.20411946-blue.svg)](https://doi.org/10.5281/zenodo.20411946)
 
 If you are using this pipeline to analyze your bioimage data you can easily include it in your references following the instructions below:
 
