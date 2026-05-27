@@ -22,7 +22,6 @@ venv.bak/
 # Data and assets
 raw_data
 results
-train_data
 
 # pixi environments
 .pixi/*
