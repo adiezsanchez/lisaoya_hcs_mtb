@@ -2,6 +2,8 @@
 
 A GPU-accelerated pipeline for automated analysis of multichannel 2D fluorescence images from a high-content screening (HCS) assay acquired on a Nikon Crestoptics V3 spinning-disk confocal. The workflow segments cells with CellposeSAM, detects *Mtb* bacteria (using [APOC ObjectSegmenter](https://github.com/haesleinhuepf/apoc)) and autophagy-related puncta (LC3B, GAL3, Chmp4B - using [Spotiflow](https://github.com/weigertlab/spotiflow)), quantifies per-cell and per-bacterium features, and exports plate-level CSV summaries for downstream heatmaps and exploratory plots.
 
+<img src="./assets/pipeline.png">
+
 <h2> Data acquisition and file naming conventions </h2>
 
 > [!WARNING]
