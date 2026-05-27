@@ -1,4 +1,4 @@
-# Lisaoya HCS-MTB — High-content screening analysis of *M. tuberculosis* infection in 2D cell cultures
+# (HCS-MTB) - High-content screening analysis of *M. tuberculosis* infection in 2D cell cultures
 
 A GPU-accelerated pipeline for automated analysis of multichannel 2D fluorescence images from a high-content screening (HCS) assay acquired on a Nikon Crestoptics V3 spinning-disk confocal. The workflow segments cells with CellposeSAM, detects *Mtb* bacteria (using [APOC ObjectSegmenter](https://github.com/haesleinhuepf/apoc)) and autophagy-related puncta (LC3B, GAL3, Chmp4B - using [Spotiflow](https://github.com/weigertlab/spotiflow)), quantifies per-cell and per-bacterium features, and exports plate-level CSV summaries for downstream heatmaps and exploratory plots.
 
@@ -116,13 +116,14 @@ A frozen `environment.yml` (`hcs_cellpose`) is also provided for mamba/conda use
 
 | Notebook | Purpose |
 |----------|---------|
-| `0_Mtb_detection_training.ipynb` | Train APOC **ObjectSegmenter** for *Mtb* (channel 3) |
-| `0_AF647_LC3B_detection_training.ipynb` | Train APOC **PixelClassifier** puncta mask for LC3B; Spotiflow filtering demos |
-| `0_RFP_Gal3_detection_training.ipynb` | Train APOC **PixelClassifier** puncta mask for GAL3 |
+| `0_Mtb_detection_training.ipynb` | Train APOC **ObjectSegmenter** for *Mtb* |
+| `0_AF647_LC3B_detection_training.ipynb` | Train APOC **PixelClassifier** puncta mask for LC3B + Spotiflow filtering demos |
+| `0_RFP_Gal3_detection_training.ipynb` | Train APOC **PixelClassifier** puncta mask for GAL3 + Spotiflow filtering demos |
+| `0_GFP_Chmp4B_detection_training.ipynb` | Train APOC **PixelClassifier** puncta mask for Chmp4B + Spotiflow filtering demos |
 
 **Notebook 1: Single well QC (`1_SP_Single_Image_visualization.ipynb`)**
 
-- Runs the full per-image pipeline on one `.nd2` well for interactive QC in Napari.
+- Runs the full per-image pipeline on one `.nd2` well for interactive QC in [Napari](https://github.com/napari/napari).
 - CellposeSAM segmentation on summed LC3B+GAL3 and BF-corrected brightfield.
 - *Mtb* detection, subcellular infection flags, per-cell intensities, bacterial load, and puncta counts.
 - Layers for input channels, labels, and Spotiflow points.
@@ -202,9 +203,17 @@ Batch results were aggregated per plate into infection-summary, per-cell, and pe
 
 <h2> How to cite this pipeline </h2>
 
-If you use this pipeline in your work, please cite the repository and contact the maintainer for an archived DOI when available.
+If you are using this pipeline to analyze your bioimage data you can easily include it in your references following the instructions below:
+
+- For APA and BibTex style scroll to the top of this page, above the Release section and under About click on the cite this repository.
+
+- For APA, Harvard, MLA, Vancouver, Chicago and IEEE styles, visit [Zenodo]() and in the right panel at the bottom you will find the Citation section. 
 
 - For licensing terms, see `LICENSE` (BSD 3-Clause).
+
+This is an example from APA, the most popular citation style:
+
+<code>Díez-Sánchez, A. (2026). adiezsanchez/lisaoya_hcs_mtb: HCS-MTB (v1.0.0). Zenodo. https://doi.org/</code>
 
 <h2> Related publications </h2>
 
