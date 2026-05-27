@@ -65,7 +65,7 @@ Use `pixi run split_multichannel` (or `python scripts/split_multichannel_trainin
 | | Watch on YouTube | Description |
 |-------|------------------|-------------|
 | | [Before you start (Python, IDE and Git on Windows)](https://youtu.be/tzdFuxF2E3U) | Python, virtual environments, IDEs, and Git on Windows — configure your machine before running the notebooks |
-| | [Pipeline installation using Pixi](https://youtu.be/tzdFuxF2E3U) | **TL;DR** Quick path to a reproducible environment with Pixi |
+| | [Pipeline installation using Pixi](https://youtu.be/QdOI3lUjCb8) | **TL;DR** Quick path to a reproducible environment with Pixi |
 
 1. Clone this repository:
 
