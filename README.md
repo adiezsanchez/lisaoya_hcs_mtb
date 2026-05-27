@@ -1,5 +1,8 @@
 # (HCS-MTB) - High-content screening analysis of *M. tuberculosis* infection in 2D cell cultures
 
+[![DOI](https://zenodo.org/badge/1002907746.svg)](https://doi.org/10.5281/zenodo.20411946)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3-green.svg)](https://github.com/adiezsanchez/lisaoya_hcs_mtb/blob/main/LICENSE)
+
 A GPU-accelerated pipeline for automated analysis of multichannel 2D fluorescence images from a high-content screening (HCS) assay acquired on a Nikon Crestoptics V3 spinning-disk confocal. The workflow segments cells with CellposeSAM, detects *Mtb* bacteria (using [APOC ObjectSegmenter](https://github.com/haesleinhuepf/apoc)) and autophagy-related puncta (LC3B, GAL3, Chmp4B - using [Spotiflow](https://github.com/weigertlab/spotiflow)), quantifies per-cell and per-bacterium features, and exports plate-level CSV summaries for downstream heatmaps and exploratory plots.
 
 <img src="./assets/pipeline.png">
@@ -203,17 +206,19 @@ Batch results were aggregated per plate into infection-summary, per-cell, and pe
 
 <h2> How to cite this pipeline </h2>
 
+[![DOI](https://zenodo.org/badge/1002907746.svg)](https://doi.org/10.5281/zenodo.20411946)
+
 If you are using this pipeline to analyze your bioimage data you can easily include it in your references following the instructions below:
 
 - For APA and BibTex style scroll to the top of this page, above the Release section and under About click on the cite this repository.
 
-- For APA, Harvard, MLA, Vancouver, Chicago and IEEE styles, visit [Zenodo]() and in the right panel at the bottom you will find the Citation section. 
+- For APA, Harvard, MLA, Vancouver, Chicago and IEEE styles, visit [Zenodo](https://doi.org/10.5281/zenodo.20411947) and in the right panel at the bottom you will find the Citation section. 
 
 - For licensing terms, see `LICENSE` (BSD 3-Clause).
 
 This is an example from APA, the most popular citation style:
 
-<code>Díez-Sánchez, A. (2026). adiezsanchez/lisaoya_hcs_mtb: HCS-MTB (v1.0.0). Zenodo. https://doi.org/</code>
+<code>Díez-Sánchez, A. (2026). adiezsanchez/lisaoya_hcs_mtb: HCS-MTB (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20411947</code>
 
 <h2> Related publications </h2>
 
